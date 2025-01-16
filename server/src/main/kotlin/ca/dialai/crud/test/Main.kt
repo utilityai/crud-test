@@ -67,21 +67,29 @@ fun main() {
         routing {
             // Create a new to-do
             post {
+                // receive the HTTP body and parse into a TodoRecord
                 val record = call.receive<TodoRecord>()
+                // increment and get the new ID for the to-do
                 val id = idCounter.incrementAndGet()
+                // add the to-do to the database
                 database[id] = record
                 logger.info("successfully created to-do {}", id)
+                // respond and give the client the new to-do's ID
                 call.respond(HttpStatusCode.OK, buildJsonObject { put("id", id) })
             }
             // get an existing to-do by ID
             get("{id}") {
+                // get the ID from the path
                 val id = call.pathParameters.getOrFail("id").toLong()
+                // try to get it from the database
                 when (val record = database[id]) {
+                    // if it does not exist, return not found
                     null -> {
                         logger.info("Unable to get to-do {} as it was not found", id)
                         call.respond(HttpStatusCode.NotFound, buildJsonObject { put("error", "not found") })
                     }
 
+                    // if it exists, return the to-do
                     else -> {
                         logger.info("successfully got to-do {}", id)
                         call.respond(HttpStatusCode.OK, record)
@@ -90,13 +98,17 @@ fun main() {
             }
             // Delete an existing to-do by id
             delete("{id}") {
+                // get the ID from the path
                 val id = call.pathParameters.getOrFail("id").toLong()
+                // try to remove the to-do from the database
                 when (database.remove(id)) {
+                    // if it does not exist, return not found
                     null -> {
                         logger.info("Failed to delete to-do {} as it was not found", id)
                         call.respond(HttpStatusCode.NotFound, buildJsonObject { put("error", "not found") })
                     }
 
+                    // if it exists, return a success message
                     else -> {
                         logger.info("successfully deleted to-do {}", id)
                         call.respond(HttpStatusCode.OK, buildJsonObject { put("success", true) })

@@ -28,13 +28,16 @@ class TodoClient(
     serverUrl: Url = Url("http://localhost:8080")
 ) {
     private val logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass())
+
     /**
      * configure the http client
      */
     private val httpClient = client.config {
+        // allow sending and receiving json
         install(ContentNegotiation) {
             json()
         }
+        // log requests and responses
         install(Logging) {
             level = LogLevel.BODY
             logger = object : Logger {
@@ -43,6 +46,7 @@ class TodoClient(
                 }
             }
         }
+        // always use the [serverUrl]
         defaultRequest {
             url { takeFrom(serverUrl) }
         }
@@ -52,15 +56,19 @@ class TodoClient(
      * Get a to-do record by its ID
      */
     suspend fun get(id: Long): TodoRecord? {
+        // send a get request with the ID as part of the path
         val response = httpClient.get {
             url {
                 appendPathSegments(id.toString())
             }
         }
 
+        // check if it was okay (assume `NotFound` if not `Ok`)
         return if (response.status != HttpStatusCode.OK) {
+            // return null if not Ok
             null
         } else {
+            // return the body parsed into a `TodoRecord` if `Ok`
             response.body<TodoRecord>()
         }
     }
@@ -69,11 +77,13 @@ class TodoClient(
      * Create a to-do record
      */
     suspend fun create(todoRecord: TodoRecord): Long {
+        // send a post request in json format with the body as the todoRecord
         val response = httpClient.post {
             contentType(ContentType.Application.Json)
             setBody(todoRecord)
         }
 
+        // get the ID from the response (assumes always successful)
         return response.body<JsonObject>()["id"]!!.jsonPrimitive.content.toLong()
     }
 
@@ -81,12 +91,14 @@ class TodoClient(
      * Delete a to-do record
      */
     suspend fun delete(id: Long): Boolean {
+        // send a delete request, appending the id to the HTTP request's url
         val response = httpClient.delete {
             url {
                 appendPathSegments(id.toString())
             }
         }
 
+        // return `true` if successful, false otherwise.
         return response.status == HttpStatusCode.OK
     }
 }

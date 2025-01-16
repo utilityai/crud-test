@@ -11,11 +11,12 @@ fun main(): Unit = runBlocking {
     val client = TodoClient()
 
     // check does not exist for -1
-    val doesNotExistYet = client.get(-1)
+    val nonExistingId = -1L
+    val doesNotExistYet = client.get(nonExistingId)
     if (doesNotExistYet != null) {
-        logger.error("-1 should never exist!")
+        logger.error("{} should never exist!", nonExistingId)
     } else {
-        logger.info("as expected, received null from server for -1")
+        logger.info("as expected, received null from server for {}", nonExistingId)
     }
 
     // create a new to-do

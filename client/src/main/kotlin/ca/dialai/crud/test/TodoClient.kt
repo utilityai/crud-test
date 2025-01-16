@@ -23,6 +23,9 @@ import kotlinx.serialization.json.jsonPrimitive
 import org.slf4j.LoggerFactory
 import java.lang.invoke.MethodHandles
 
+/**
+ * An HTTP client for interacting with the to-do server
+ */
 class TodoClient(
     client: HttpClient = HttpClient(),
     serverUrl: Url = Url("http://localhost:8080")
